@@ -1,0 +1,52 @@
+@import "tailwindcss";
+
+@theme {
+  --color-urban-charcoal: #0E0F13;
+  --color-urban-emerald: #00C27A;
+  --color-urban-cyan: #00E0FF;
+
+  --font-sans: var(--font-space-grotesk), ui-sans-serif, system-ui, sans-serif;
+}
+
+@layer base {
+  :root {
+    --background: #0E0F13;
+    --foreground: #f8fafc;
+  }
+}
+
+@layer base {
+  * {
+    border-color: rgba(255, 255, 255, 0.1);
+  }
+
+  body {
+    background-color: var(--background);
+    color: var(--foreground);
+    font-family: var(--font-space-grotesk);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+}
+
+/* Mapbox specific overrides */
+.mapboxgl-ctrl-bottom-left,
+.mapboxgl-ctrl-bottom-right {
+  display: none !important;
+  /* Hide default mapbox controls for cleaner UI */
+}
+
+/* Glassmorphism utilities */
+.glass-panel {
+  background: rgba(14, 15, 19, 0.6);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.glass-panel-light {
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}

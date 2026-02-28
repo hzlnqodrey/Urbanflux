@@ -1,0 +1,71 @@
+version: '3.8'
+
+services:
+  # Database with PostGIS extension for spatial queries
+  postgres:
+    image: postgis/postgis:15-3.3-alpine
+    container_name: urbanflux-db
+    environment:
+      POSTGRES_USER: urbanflux
+      POSTGRES_PASSWORD: urbanflux_password
+      POSTGRES_DB: urbanflux_mobility
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    restart: unless-stopped
+
+  # Redis for pub/sub message brokering
+  redis:
+    image: redis:7-alpine
+    container_name: urbanflux-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redisdata:/data
+    restart: unless-stopped
+
+  # Golang Backend WebSocket Server
+  backend:
+    build:
+      context: ./urbanflux-hubs/backend
+      dockerfile: Dockerfile
+    container_name: urbanflux-backend
+    ports:
+      - "8080:8080"
+    environment:
+      - PORT=8080
+      - REDIS_URL=redis://redis:6379/0
+      - DB_URL=postgres://urbanflux:urbanflux_password@postgres:5432/urbanflux_mobility?sslmode=disable
+    depends_on:
+      - postgres
+      - redis
+    restart: unless-stopped
+
+  # Hub Dashboard Frontend
+  hubs-frontend:
+    build:
+      context: ./urbanflux-hubs/frontend
+      dockerfile: Dockerfile
+    container_name: urbanflux-hubs-frontend
+    ports:
+      - "3000:3000"
+    environment:
+      - NEXT_PUBLIC_WS_URL=ws://localhost:8080/ws
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+  # Landing Page
+  landing:
+    build:
+      context: ./urbanflux-landing
+      dockerfile: Dockerfile
+    container_name: urbanflux-landing
+    ports:
+      - "3001:3000"
+    restart: unless-stopped
+
+volumes:
+  pgdata:
+  redisdata:
