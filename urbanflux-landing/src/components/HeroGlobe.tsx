@@ -2,22 +2,39 @@
 
 import React, { useRef, useEffect, useState } from 'react'
 import { Canvas, useFrame } from '@react-three/fiber'
-import { Sphere, Line, PointMaterial, Points } from '@react-three/drei'
+import { Sphere, Line, PointMaterial, Points, OrbitControls } from '@react-three/drei'
 import * as THREE from 'three'
 
 const R = 2; // Globe radius
 
+const HUB_LOCATIONS = [
+    { name: 'Jakarta', lat: -6.2088, lon: 106.8456 },
+    { name: 'Tokyo', lat: 35.6762, lon: 139.6503 },
+    { name: 'Kuala Lumpur', lat: 3.1390, lon: 101.6869 },
+    { name: 'Zurich', lat: 47.3769, lon: 8.5417 },
+    { name: 'Istanbul', lat: 41.0082, lon: 28.9784 },
+    { name: 'Johannesburg', lat: -26.2041, lon: 28.0473 },
+    { name: 'Brasilia', lat: -15.8267, lon: -47.9218 }
+];
+
 function getPointOnSphere(phi: number, theta: number, radius: number) {
-    const x = radius * Math.sin(phi) * Math.cos(theta);
+    // Negate x so that the map isn't mirrored from the +Z viewer perspective
+    const x = -radius * Math.sin(phi) * Math.cos(theta);
     const y = radius * Math.cos(phi);
     const z = radius * Math.sin(phi) * Math.sin(theta);
     return new THREE.Vector3(x, y, z);
 }
 
+function getHubPosition(lat: number, lon: number, radius: number) {
+    const phi = (90 - lat) * (Math.PI / 180);
+    const theta = lon * (Math.PI / 180);
+    return getPointOnSphere(phi, theta, radius);
+}
+
 function getCurve(p1: THREE.Vector3, p2: THREE.Vector3) {
     const distance = p1.distanceTo(p2);
     const midPoint = p1.clone().lerp(p2, 0.5);
-    midPoint.normalize().multiplyScalar(R + distance * 0.3); // Curve height
+    midPoint.normalize().multiplyScalar(R + distance * 0.5); // Curve height made higher
 
     const curve = new THREE.QuadraticBezierCurve3(p1, midPoint, p2);
     return curve.getPoints(50);
@@ -25,7 +42,7 @@ function getCurve(p1: THREE.Vector3, p2: THREE.Vector3) {
 
 function DotGlobe() {
     const groupRef = useRef<THREE.Group>(null);
-    const [earthData, setEarthData] = useState<{ dots: Float32Array, lines: THREE.Vector3[][] } | null>(null);
+    const [earthData, setEarthData] = useState<{ dots: Float32Array, hubs: THREE.Vector3[], lines: THREE.Vector3[][] } | null>(null);
 
     useEffect(() => {
         const img = new Image();
@@ -42,7 +59,7 @@ function DotGlobe() {
             const imageData = ctx.getImageData(0, 0, img.width, img.height).data;
 
             const points = [];
-            const hubs: THREE.Vector3[] = [];
+            const hubs: THREE.Vector3[] = HUB_LOCATIONS.map(loc => getHubPosition(loc.lat, loc.lon, R));
 
             // Generate dots using Fibonacci sphere
             const totalPoints = 65000;
@@ -62,33 +79,28 @@ function DotGlobe() {
                 const pixelIndex = (y * img.width + x) * 4;
                 const r = imageData[pixelIndex];
 
-                // Keep point if it's on land (specular map land is white)
-                if (r > 40) {
+                // Earth specular map: oceans are bright (r > ~90), continents are dark (r < 40)
+                // We keep the point if it's on land (continent instead of ocean)
+                if (r < 40) {
                     const point = getPointOnSphere(phi, theta, R);
                     points.push(point.x, point.y, point.z);
-
-                    // Randomly select some hubs for lines
-                    if (Math.random() > 0.999 && hubs.length < 35) {
-                        hubs.push(point);
-                    }
                 }
             }
 
-            // Generate connections between hubs
+            // Generate golden connections between specific hubs
             const lines: THREE.Vector3[][] = [];
             for (let i = 0; i < hubs.length; i++) {
-                // Connect each hub to random other hubs
-                const numConnections = Math.floor(Math.random() * 2) + 1;
-                for (let j = 0; j < numConnections; j++) {
-                    const targetIdx = Math.floor(Math.random() * hubs.length);
-                    if (targetIdx !== i && hubs[i].distanceTo(hubs[targetIdx]) > 0.5) {
-                        lines.push(getCurve(hubs[i], hubs[targetIdx]));
+                // Connect each hub to 1 or 2 other specific hubs to form a web
+                for (let j = 0; j < hubs.length; j++) {
+                    if (i !== j && Math.random() > 0.4) {
+                        lines.push(getCurve(hubs[i], hubs[j]));
                     }
                 }
             }
 
             setEarthData({
                 dots: new Float32Array(points),
+                hubs: hubs,
                 lines: lines
             });
         };
@@ -97,55 +109,64 @@ function DotGlobe() {
     useFrame((state) => {
         if (groupRef.current) {
             groupRef.current.rotation.y = state.clock.elapsedTime * 0.05;
-            groupRef.current.rotation.z = 0.05 * Math.sin(state.clock.elapsedTime * 0.1);
         }
     });
 
     if (!earthData) return null;
 
     return (
-        <group ref={groupRef}>
-            {/* Core Dark Globe Map (Occludes back dots) */}
-            <Sphere args={[R - 0.02, 64, 64]}>
-                <meshBasicMaterial color="#0A0F1C" />
-            </Sphere>
+        <group rotation={[0, 0, 23.5 * Math.PI / 180]}>
+            <group ref={groupRef}>
+                {/* Core Dark Globe Map (Occludes back dots) */}
+                <Sphere args={[R - 0.02, 64, 64]}>
+                    <meshBasicMaterial color="#0A0F1C" />
+                </Sphere>
 
-            {/* Glowing Atmosphere edge */}
-            <Sphere args={[R + 0.15, 64, 64]} scale={[1, 1, 1]}>
-                <meshBasicMaterial color="#00E0FF" transparent opacity={0.06} depthWrite={false} blending={THREE.AdditiveBlending} />
-            </Sphere>
+                {/* Glowing Atmosphere edge */}
+                <Sphere args={[R + 0.15, 64, 64]} scale={[1, 1, 1]}>
+                    <meshBasicMaterial color="#00E0FF" transparent opacity={0.06} depthWrite={false} blending={THREE.AdditiveBlending} />
+                </Sphere>
 
-            {/* Landmass Dots */}
-            <Points positions={earthData.dots}>
-                <PointMaterial
-                    transparent
-                    color="#00C27A"
-                    size={0.015}
-                    sizeAttenuation={true}
-                    depthWrite={false}
-                    opacity={0.8}
-                    blending={THREE.AdditiveBlending}
-                />
-            </Points>
+                {/* Continents Dots */}
+                <Points positions={earthData.dots}>
+                    <PointMaterial
+                        transparent
+                        color="#00C27A"
+                        size={0.012}
+                        sizeAttenuation={true}
+                        depthWrite={false}
+                        opacity={0.8}
+                        blending={THREE.AdditiveBlending}
+                    />
+                </Points>
 
-            {/* Flight Lines / Connections */}
-            {earthData.lines.map((points, idx) => (
-                <Line
-                    key={idx}
-                    points={points}
-                    color="#00E0FF"
-                    opacity={0.3}
-                    transparent
-                    lineWidth={1.5}
-                />
-            ))}
+                {/* Golden Flight Lines */}
+                {earthData.lines.map((points, idx) => (
+                    <Line
+                        key={idx}
+                        points={points}
+                        color="#FFD700"
+                        opacity={0.6}
+                        transparent
+                        lineWidth={2}
+                    />
+                ))}
+
+                {/* Global Hubs */}
+                {earthData.hubs.map((pos, idx) => (
+                    <mesh key={idx} position={pos}>
+                        <sphereGeometry args={[0.04, 16, 16]} />
+                        <meshBasicMaterial color="#00FF88" transparent opacity={0.9} depthWrite={false} blending={THREE.AdditiveBlending} />
+                    </mesh>
+                ))}
+            </group>
         </group>
     );
 }
 
 export default function HeroGlobe() {
     return (
-        <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
+        <div className="absolute inset-0 z-0 overflow-hidden pointer-events-auto">
             {/* Background video commented out as requested */}
             {/* <video
                 autoPlay
@@ -161,6 +182,7 @@ export default function HeroGlobe() {
                 <Canvas camera={{ position: [0, 0, 5], fov: 45 }} dpr={[1, 2]}>
                     <ambientLight intensity={0.5} />
                     <DotGlobe />
+                    <OrbitControls enableZoom={false} enablePan={false} autoRotate={false} />
                 </Canvas>
             </div>
         </div>
