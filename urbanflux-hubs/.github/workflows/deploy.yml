@@ -1,0 +1,36 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  build_and_deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v4
+      
+    - name: Set up QEMU
+      uses: docker/setup-qemu-action@v3
+      
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+      
+    # Note: In a real environment, you'd push to GHCR or Docker Hub here.
+    # We simulate transferring the compose context for this scaffold.
+    
+    - name: Deploy to Cloudflare VM via SSH
+      uses: appleboy/ssh-action@v1.0.3
+      with:
+        host: ${{ secrets.VM_HOST }}
+        username: ${{ secrets.VM_USER }}
+        key: ${{ secrets.VM_SSH_KEY }}
+        script: |
+          cd /opt/urbanflux
+          git pull origin main
+          docker compose -f docker-compose.yml up -d --build
+          
+          # Ensure Cloudflared tunnel is running (if configured)
+          # systemctl restart cloudflared
