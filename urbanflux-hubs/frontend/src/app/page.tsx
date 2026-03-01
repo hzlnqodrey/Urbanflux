@@ -1,46 +1,35 @@
 'use client'
 
-import React from 'react'
+import React, { useState } from 'react'
 import dynamic from 'next/dynamic'
 
 const HubMapOSM = dynamic(() => import('@/components/Mapbox/HubMapOSM'), { ssr: false })
-import { Activity, Bell, Box, Map as MapIcon, Settings, Route, TrendingUp, Car } from 'lucide-react'
+const HubMap = dynamic(() => import('@/components/Mapbox/HubMap'), { ssr: false })
+import { Activity, TrendingUp, Car } from 'lucide-react'
+import Sidebar from '@/components/Dashboard/Sidebar'
+import { cn } from '@/lib/utils'
 
 export default function Dashboard() {
+  const [mapMode, setMapMode] = useState<'2D' | '3D'>('2D')
+
   return (
     <main className="relative w-screen h-screen overflow-hidden bg-[var(--color-urban-charcoal)]">
       {/* Background Map layer */}
-      <HubMapOSM />
+      {mapMode === '2D' ? <HubMapOSM /> : <HubMap />}
 
       {/* Main UI Overlay - Layout Grid */}
       <div className="absolute inset-0 z-10 pointer-events-none flex">
 
         {/* Left Sidebar - Navigation */}
-        <aside className="w-16 md:w-64 h-full border-r border-white/5 glass-panel flex flex-col pointer-events-auto transition-all duration-300">
-          <div className="h-16 flex items-center justify-center md:justify-start md:px-6 border-b border-white/5">
-            <Box className="w-6 h-6 text-[#00E0FF]" />
-            <span className="hidden md:ml-3 font-bold text-lg tracking-tight">Urbanflux</span>
-          </div>
-
-          <nav className="flex-1 py-6 flex flex-col gap-2 px-2 md:px-4">
-            <NavItem icon={<MapIcon />} label="Hub Map" active />
-            <NavItem icon={<Route />} label="Transit Routes" />
-            <NavItem icon={<Activity />} label="Live Telemetry" />
-            <NavItem icon={<Bell />} label="Alerts & Events" />
-          </nav>
-
-          <div className="p-4 border-t border-white/5">
-            <NavItem icon={<Settings />} label="Settings" />
-          </div>
-        </aside>
+        <Sidebar />
 
         {/* Center Content / Floating overlay elements */}
         <div className="flex-1 flex flex-col">
           {/* Top Navbar */}
           <header className="h-16 px-6 flex items-center justify-between glass-panel-light pointer-events-auto">
             <div className="flex items-center gap-4">
-              <h1 className="font-semibold text-lg text-white">Jakarta Central Hub</h1>
-              <div className="flex items-center gap-1.5 px-2.5 py-1 rounded bg-[#00C27A]/10 text-[#00C27A] text-xs font-medium border border-[#00C27A]/20">
+              <h1 className="font-mono font-semibold text-lg text-white">Jakarta Central Hub</h1>
+              <div className="flex items-center gap-1.5 px-2.5 py-1 rounded bg-[#00C27A]/10 text-[#00C27A] text-xs font-mono font-medium border border-[#00C27A]/20">
                 <span className="relative flex h-2 w-2">
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#00C27A] opacity-75"></span>
                   <span className="relative inline-flex rounded-full h-2 w-2 bg-[#00C27A]"></span>
@@ -65,8 +54,8 @@ export default function Dashboard() {
                 <Car className="w-4 h-4 text-[#00E0FF]" />
               </div>
               <div className="flex items-end gap-2">
-                <span className="text-4xl font-bold tracking-tight text-white">1,492</span>
-                <span className="text-xs text-[#00C27A] font-medium mb-1 flex items-center">
+                <span className="font-mono text-4xl font-bold tracking-tight text-white">1,492</span>
+                <span className="font-mono text-xs text-[#00C27A] font-medium mb-1 flex items-center">
                   <TrendingUp className="w-3 h-3 mr-1" /> +12%
                 </span>
               </div>
@@ -90,7 +79,7 @@ export default function Dashboard() {
             {/* Live Feed List */}
             <div className="glass-panel rounded-xl flex flex-col border border-white/10 shadow-2xl max-h-64 overflow-hidden">
               <div className="p-4 border-b border-white/5 bg-white/5">
-                <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">Live Anomalies</span>
+                <span className="font-mono text-xs font-semibold uppercase tracking-wider text-slate-400">Live Anomalies</span>
               </div>
               <div className="flex-1 overflow-y-auto p-2 flex flex-col gap-1">
                 <ActivityItem time="14:03" type="DELAY" desc="Route B3 running 4m late" />
@@ -103,8 +92,18 @@ export default function Dashboard() {
 
           {/* Bottom Controls */}
           <div className="absolute bottom-6 left-1/2 -translate-x-1/2 glass-panel rounded-full px-4 py-2 flex items-center gap-2 pointer-events-auto border border-white/10 shadow-2xl">
-            <button className="px-3 py-1.5 rounded-full text-xs font-medium bg-white/10 text-white hover:bg-white/20 transition-colors">2D View</button>
-            <button className="px-3 py-1.5 rounded-full text-xs font-medium text-slate-400 hover:text-white transition-colors">3D View</button>
+            <button
+              onClick={() => setMapMode('2D')}
+              className={cn("px-3 py-1.5 rounded-full text-xs font-medium transition-colors", mapMode === '2D' ? "bg-white/10 text-white" : "text-slate-400 hover:text-white")}
+            >
+              2D View
+            </button>
+            <button
+              onClick={() => setMapMode('3D')}
+              className={cn("px-3 py-1.5 rounded-full text-xs font-medium transition-colors", mapMode === '3D' ? "bg-white/10 text-white" : "text-slate-400 hover:text-white")}
+            >
+              3D View
+            </button>
             <div className="w-px h-4 bg-white/10 mx-2" />
             <button className="px-3 py-1.5 rounded-full text-xs font-medium text-slate-400 hover:text-white transition-colors">Heatmap</button>
             <button className="px-3 py-1.5 rounded-full text-xs font-medium text-slate-400 hover:text-white transition-colors">Transit Corridors</button>
@@ -113,20 +112,6 @@ export default function Dashboard() {
         </div>
       </div>
     </main>
-  )
-}
-
-function NavItem({ icon, label, active = false }: { icon: React.ReactNode, label: string, active?: boolean }) {
-  return (
-    <button className={cn(
-      "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors w-full group",
-      active ? "bg-white/10 text-white" : "text-slate-400 hover:bg-white/5 hover:text-white"
-    )}>
-      <span className={cn("w-5 h-5", active ? "text-[#00E0FF]" : "text-slate-500 group-hover:text-slate-300")}>
-        {icon}
-      </span>
-      <span className="hidden md:block text-sm font-medium">{label}</span>
-    </button>
   )
 }
 
@@ -141,7 +126,7 @@ function ActivityItem({ time, type, desc }: { time: string, type: 'DELAY' | 'WAR
       <span className="font-mono text-[10px] text-slate-500 mt-0.5">{time}</span>
       <div>
         <div className="flex items-center gap-1.5 mb-1">
-          <span className={cn("text-[8px] font-bold px-1.5 py-0.5 rounded-[3px]", colorMap[type])}>{type}</span>
+          <span className={cn("font-mono text-[8px] font-bold px-1.5 py-0.5 rounded-[3px]", colorMap[type])}>{type}</span>
         </div>
         <p className="text-xs text-slate-300 leading-snug">{desc}</p>
       </div>
@@ -149,9 +134,3 @@ function ActivityItem({ time, type, desc }: { time: string, type: 'DELAY' | 'WAR
   )
 }
 
-// utility function placeholder
-import { clsx, type ClassValue } from "clsx"
-import { twMerge } from "tailwind-merge"
-function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs))
-}
