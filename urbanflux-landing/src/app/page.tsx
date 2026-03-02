@@ -24,12 +24,12 @@ export default function Home() {
             <Globe2 className="w-6 h-6 text-[#00E0FF]" />
             <span className="font-bold text-xl md:text-2xl tracking-tight">Urbanflux</span>
           </div>
-          <div className="hidden md:flex items-center gap-8 text-sm md:text-base font-medium text-slate-400">
+          <div className="hidden md:flex items-center gap-8 text-sm md:text-base font-medium text-slate-400" style={{ fontFamily: 'var(--font-jetbrains-mono)' }}>
             <a href="#platform" className="hover:text-white transition-colors">Platform</a>
             <a href="#solutions" className="hover:text-white transition-colors">Solutions</a>
             <a href="#developers" className="hover:text-white transition-colors">Developers</a>
           </div>
-          <button className="glass-panel px-5 py-2.5 rounded-full text-sm font-medium hover:bg-white/10 transition-colors">
+          <button className="glass-panel px-5 py-2.5 rounded-full text-sm font-medium hover:bg-white/10 transition-colors" style={{ fontFamily: 'var(--font-jetbrains-mono)' }}>
             Sign In
           </button>
         </nav>
@@ -53,13 +53,13 @@ export default function Home() {
 
           <p
             className="text-base md:text-lg text-slate-400 mb-8 max-w-lg md:max-w-xl font-light leading-relaxed"
-            style={{ fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", Arial, sans-serif' }}
+            style={{ fontFamily: 'var(--font-jetbrains-mono)' }}
           >
             Orchestrate city-wide transit networks with real-time spatial data, AI-driven congestion routing, and high-frequency WebSocket streams.
           </p>
 
           {/* Buttons */}
-          <div className="flex flex-col sm:flex-row gap-4">
+          <div className="flex flex-col sm:flex-row gap-4" style={{ fontFamily: 'var(--font-jetbrains-mono)' }}>
             <button className="bg-white text-[var(--color-urban-charcoal)] px-6 py-3.5 md:px-8 md:py-4 rounded-full font-semibold hover:bg-slate-200 transition-colors flex items-center justify-center gap-2 group">
               Launch Dashboard
               <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
