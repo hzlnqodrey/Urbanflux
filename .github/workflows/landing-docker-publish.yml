@@ -57,7 +57,7 @@ jobs:
   build-and-push:
     needs: security-and-test
     runs-on: ubuntu-latest
-    environment: DOCKER_USERNAME
+    # environment: DOCKER_USERNAME
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -79,9 +79,8 @@ jobs:
 
       - name: Safe Echo Check
         run: |
-          # Use string length and masking to safely verify the secret without printing it
+          # Use string length to safely verify the secret without printing it
           USERNAME_LENGTH=${#DOCKER_USER}
-          echo "::add-mask::${{ secrets.DOCKER_USERNAME }}"
           echo "Username is set and is $USERNAME_LENGTH characters long."
           
           # We cannot easily check the length of the password securely, 
