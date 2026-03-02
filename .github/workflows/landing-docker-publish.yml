@@ -57,7 +57,9 @@ jobs:
   build-and-push:
     needs: security-and-test
     runs-on: ubuntu-latest
-    # environment: DOCKER_USERNAME
+    environment: DOCKER_USERNAME
+    env:
+      DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -67,7 +69,7 @@ jobs:
 
       - name: Pre-check Secrets
         run: |
-          if [ -z "${{ secrets.DOCKER_USERNAME }}" ]; then
+          if [ -z "$DOCKER_USERNAME" ]; then
             echo "::error::DOCKER_USERNAME secret is missing or empty"
             exit 1
           fi
@@ -80,8 +82,8 @@ jobs:
       - name: Safe Echo Check
         run: |
           # Use string length to safely verify the secret without printing it
-          USERNAME_LENGTH=${#DOCKER_USER}
-          echo "Username is set and is $USERNAME_LENGTH characters long."
+          USERNAME_LENGTH=${#DOCKER_USERNAME}
+          echo "Username is set and is $USERNAME_LENGTH characters¸ long."
           
           # We cannot easily check the length of the password securely, 
           # but we can confirm it's not a dummy string.
@@ -90,13 +92,11 @@ jobs:
           else
              echo "Password appears to be a valid string."
           fi
-        env:
-          DOCKER_USER: ${{ secrets.DOCKER_USERNAME }}
 
       - name: Log in to Docker Hub
         uses: docker/login-action@v3
         with:
-          username: ${{ secrets.DOCKER_USERNAME }}
+          username: ${{ env.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
           
       - name: Post-check Docker Auth
@@ -119,7 +119,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ${{ secrets.DOCKER_USERNAME }}/urbanflux-landing
+          images: ${{ env.DOCKER_USERNAME }}/urbanflux-landing
           tags: |
             type=raw,value=latest,enable={{is_default_branch}}
             type=sha,format=short
