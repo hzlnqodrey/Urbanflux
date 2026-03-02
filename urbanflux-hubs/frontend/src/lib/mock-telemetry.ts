@@ -12,6 +12,95 @@ export type BusTelemetry = {
 };
 
 // Route: Corridor 1 (Blok M - Kota) - Simplified segment around Sudirman/Thamrin
+export const CORRIDOR_6_COORDS: [number, number][] = [
+    [-6.24324, 106.80000],
+    [-6.24310, 106.79940],
+    [-6.24277, 106.79899],
+    [-6.24233, 106.79894],
+    [-6.24263, 106.79846],
+    [-6.24337, 106.79820],
+    [-6.24446, 106.79821],
+    [-6.24524, 106.79820],
+    [-6.24589, 106.79836],
+    [-6.24589, 106.79984],
+    [-6.24588, 106.80127],
+    [-6.24589, 106.80223],
+    [-6.24586, 106.80316],
+    [-6.24580, 106.80343],
+    [-6.24539, 106.80428],
+    [-6.24527, 106.80445],
+    [-6.24607, 106.80505],
+    [-6.24752, 106.80615],
+    [-6.24830, 106.80677],
+    [-6.24891, 106.80757],
+    [-6.24936, 106.80821],
+    [-6.24943, 106.80864],
+    [-6.24986, 106.80946],
+    [-6.25044, 106.80973],
+    [-6.25082, 106.80970],
+    [-6.25156, 106.80912],
+    [-6.25293, 106.80839],
+    [-6.25360, 106.80815],
+    [-6.25525, 106.80811],
+    [-6.25659, 106.80802],
+    [-6.25718, 106.80804],
+    [-6.25884, 106.80814],
+    [-6.26106, 106.80827],
+    [-6.26233, 106.80834],
+    [-6.26403, 106.80843],
+    [-6.26473, 106.80847],
+    [-6.26593, 106.80853],
+    [-6.26761, 106.80862],
+    [-6.27072, 106.80878],
+    [-6.27271, 106.80882],
+    [-6.27354, 106.80876],
+    [-6.27502, 106.80867],
+    [-6.27604, 106.80855],
+    [-6.27780, 106.80838],
+    [-6.27879, 106.80785],
+    [-6.27939, 106.80754],
+    [-6.28067, 106.80745],
+    [-6.28350, 106.80732],
+    [-6.28667, 106.80713],
+    [-6.28802, 106.80699],
+    [-6.28870, 106.80677],
+    [-6.28929, 106.80655],
+    [-6.29033, 106.80616],
+    [-6.29073, 106.80610],
+    [-6.29144, 106.80646],
+    [-6.29190, 106.80703],
+    [-6.29200, 106.80873],
+    [-6.29200, 106.80906],
+    [-6.29195, 106.81015],
+    [-6.29190, 106.81197],
+    [-6.29187, 106.81297],
+    [-6.29195, 106.81448],
+    [-6.29198, 106.81568],
+    [-6.29202, 106.81647],
+    [-6.29204, 106.81683],
+    [-6.29211, 106.81780],
+    [-6.29222, 106.81871],
+    [-6.29253, 106.82000],
+    [-6.29305, 106.82136],
+    [-6.29360, 106.82250],
+    [-6.29422, 106.82237],
+    [-6.29684, 106.82134],
+    [-6.29721, 106.82120],
+    [-6.29827, 106.82120],
+    [-6.29893, 106.82117],
+    [-6.29941, 106.82116],
+    [-6.30044, 106.82127],
+    [-6.30101, 106.82137],
+    [-6.30231, 106.82123],
+    [-6.30295, 106.82114],
+    [-6.30438, 106.82091],
+    [-6.30516, 106.82076],
+    [-6.30584, 106.82060],
+    [-6.30641, 106.82065],
+    [-6.24324, 106.80000],
+    [-6.30649, 106.82165]
+];
+
 export const CORRIDOR_1_COORDS: [number, number][] = [
     [-6.17552, 106.83005],
     [-6.17534, 106.83015],
@@ -152,6 +241,22 @@ export function generateInitialBuses(): { bus: BusTelemetry, segmentIndex: numbe
             progress: 0,
             direction: -1 // Moving towards Monas
         }
+,
+        {
+            bus: { 
+                id: "TB-0622", 
+                routeId: "CORRIDOR-6", 
+                latitude: CORRIDOR_6_COORDS[0][0], 
+                longitude: CORRIDOR_6_COORDS[0][1], 
+                speed: 35, 
+                status: 'ACTIVE', 
+                bearing: 0, 
+                nextStop: "Bundaran Senayan" 
+            },
+            segmentIndex: 0, 
+            progress: 0, 
+            direction: 1 // Moving towards Ragunan
+        }
     ]
 }
 
@@ -162,13 +267,14 @@ export function updateBusesStep(busesState: ReturnType<typeof generateInitialBus
         let { segmentIndex, progress, direction } = state;
         const bus = state.bus;
 
-        const p1 = direction === 1 ? CORRIDOR_1_COORDS[segmentIndex] : CORRIDOR_1_COORDS[segmentIndex + 1];
-        const p2 = direction === 1 ? CORRIDOR_1_COORDS[segmentIndex + 1] : CORRIDOR_1_COORDS[segmentIndex];
+        const coords = bus.routeId === 'CORRIDOR-1' ? CORRIDOR_1_COORDS : CORRIDOR_6_COORDS;
+        const p1 = direction === 1 ? coords[segmentIndex] : coords[segmentIndex + 1];
+        const p2 = direction === 1 ? coords[segmentIndex + 1] : coords[segmentIndex];
 
         if (!p1 || !p2) {
             // Reached the end, turn around
             direction = direction === 1 ? -1 : 1;
-            segmentIndex = direction === 1 ? 0 : CORRIDOR_1_COORDS.length - 2;
+            segmentIndex = direction === 1 ? 0 : coords.length - 2;
             progress = 0;
             return { bus, segmentIndex, progress, direction };
         }
@@ -183,16 +289,16 @@ export function updateBusesStep(busesState: ReturnType<typeof generateInitialBus
             if (direction === 1) segmentIndex++; else segmentIndex--;
 
             // Check bounds again
-            if (segmentIndex >= CORRIDOR_1_COORDS.length - 1 || segmentIndex < 0) {
+            if (segmentIndex >= coords.length - 1 || segmentIndex < 0) {
                 direction = direction === 1 ? -1 : 1;
-                segmentIndex = direction === 1 ? 0 : CORRIDOR_1_COORDS.length - 2;
+                segmentIndex = direction === 1 ? 0 : coords.length - 2;
                 progress = 0;
             }
         }
 
         // Interpolate position
-        const cp1 = direction === 1 ? CORRIDOR_1_COORDS[segmentIndex] : CORRIDOR_1_COORDS[segmentIndex + 1];
-        const cp2 = direction === 1 ? CORRIDOR_1_COORDS[segmentIndex + 1] : CORRIDOR_1_COORDS[segmentIndex];
+        const cp1 = direction === 1 ? coords[segmentIndex] : coords[segmentIndex + 1];
+        const cp2 = direction === 1 ? coords[segmentIndex + 1] : coords[segmentIndex];
 
         if (cp1 && cp2) {
             bus.latitude = cp1[0] + (cp2[0] - cp1[0]) * progress;

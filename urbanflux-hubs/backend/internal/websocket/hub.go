@@ -45,3 +45,7 @@ func (h *Hub) Run() {
 		}
 	}
 }
+
+func (h *Hub) Broadcast(msg []byte) {
+	h.broadcast <- msg
+}
