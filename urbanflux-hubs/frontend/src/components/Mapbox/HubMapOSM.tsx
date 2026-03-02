@@ -4,7 +4,7 @@ import React, { useEffect, useState } from 'react'
 import { MapContainer, TileLayer, ZoomControl, Marker, Polyline } from 'react-leaflet'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
-import { generateInitialBuses, updateBusesStep, CORRIDOR_1_COORDS } from '@/lib/mock-telemetry'
+import { generateInitialBuses, updateBusesStep, CORRIDOR_1_COORDS, CORRIDOR_6_COORDS } from '@/lib/mock-telemetry'
 
 export default function HubMapOSM() {
     const [buses, setBuses] = useState<ReturnType<typeof generateInitialBuses>>(generateInitialBuses());
@@ -49,7 +49,7 @@ export default function HubMapOSM() {
                     url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
                 />
 
-                {/* Transit Corridor Polyline */}
+                {/* Transit Corridor 1 Polyline (Cyan) */}
                 <Polyline
                     positions={CORRIDOR_1_COORDS}
                     pathOptions={{ color: '#ffffff', weight: 4, opacity: 0.2, dashArray: '10, 10' }}
@@ -57,6 +57,16 @@ export default function HubMapOSM() {
                 <Polyline
                     positions={CORRIDOR_1_COORDS}
                     pathOptions={{ color: '#00E0FF', weight: 2, opacity: 0.5 }}
+                />
+
+                {/* Transit Corridor 6 Polyline (Emerald) */}
+                <Polyline
+                    positions={CORRIDOR_6_COORDS}
+                    pathOptions={{ color: '#ffffff', weight: 4, opacity: 0.2, dashArray: '10, 10' }}
+                />
+                <Polyline
+                    positions={CORRIDOR_6_COORDS}
+                    pathOptions={{ color: '#00C27A', weight: 2, opacity: 0.5 }}
                 />
 
                 {/* Animated Bus Markers */}
