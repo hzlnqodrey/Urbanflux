@@ -22,10 +22,9 @@ To enable the automated GitHub Actions pipeline (`landing-docker-publish.yml`):
 3. Add the following credentials:
    - `DOCKER_USERNAME`: Your Docker Hub username.
    - `DOCKER_PASSWORD`: Your Docker Hub personal access token (recommended) or password.
-4. Once added, any push to the `main` branch affecting the `urbanflux-landing` directory will trigger:
-   - Playwright Tests
-   - Security Scan (Trivy + TruffleHog)
-   - Docker Build & Push to Docker Hub
+4. Once added:
+   - Any **Pull Request** targeting the `main` branch affecting the `urbanflux-landing` directory will trigger the Playwright Tests and Security Scans to validate the PR.
+   - Any **push** (merge) to the `main` branch will trigger the entire pipeline, including the Docker Build & Push to Docker Hub.
 
 ---
 

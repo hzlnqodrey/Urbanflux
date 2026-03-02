@@ -3,11 +3,11 @@ name: Publish Urbanflux Landing
 on:
   push:
     branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
     paths:
       - 'urbanflux-landing/**'
       - '.github/workflows/landing-docker-publish.yml'
-  pull_request:
-    branches: [ "main" ]
 
 jobs:
   security-and-test:
@@ -40,7 +40,7 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: '18'
+          node-version: '20'
           cache: 'npm'
           cache-dependency-path: urbanflux-landing/package-lock.json
       
