@@ -26,7 +26,7 @@ To enable the automated GitHub Actions pipeline (`landing-docker-publish.yml`):
    - Any **Pull Request** targeting the `main` branch affecting the `urbanflux-landing` directory will trigger the Playwright Tests and Security Scans to validate the PR.
    - Any **push** (merge) to the `main` branch will trigger the entire pipeline, including the Docker Build & Push to Docker Hub.
 
----
+--- 
 
 ## 🐳 Running with Docker Locally
 
