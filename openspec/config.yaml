@@ -1,0 +1,30 @@
+# OpenSpec Project Configuration — Urbanflux
+schema: spec-driven
+
+context: |
+  Tech stack: Next.js 15, Tailwind CSS, Three.js/GLSL (landing page), Mapbox GL JS (hub platform), Fastify (backend), Docker, GitHub Actions CI/CD
+  Architecture: Monorepo with landing page + hub platform dashboard
+  Languages: TypeScript, JavaScript
+  Testing: Playwright for e2e tests
+  Deployment: Docker → Docker Hub, Cloudflare
+  Security: TruffleHog (secret scanning), Trivy (container scanning)
+  Style: Dark premium enterprise aesthetic, mobile-responsive
+  Hubs: Jakarta, Istanbul, Switzerland, Japan — real-time transit data overlays
+  API: Transjakarta Public API integration with adapter architecture
+
+rules:
+  proposal:
+    - Include which hub(s) are affected (Jakarta, Istanbul, Switzerland, Japan, or global)
+    - Identify if the change affects landing page, hub platform, or backend
+    - Note any API/data source dependencies
+  specs:
+    - Use Given/When/Then format for scenarios
+    - Specify which transit modes are affected (Bus, Rail, Ferry, etc.)
+    - Include accessibility requirements where applicable
+  design:
+    - Reference existing component patterns in the codebase
+    - Include Mapbox layer considerations for map-related changes
+    - Note Docker/deployment implications
+  tasks:
+    - Group by component (frontend, backend, infrastructure)
+    - Include test tasks for Playwright e2e coverage
