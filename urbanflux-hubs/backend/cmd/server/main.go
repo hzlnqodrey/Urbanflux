@@ -10,6 +10,7 @@ import (
 
 	"github.com/urbanflux/hubs-backend/internal/adapters"
 	"github.com/urbanflux/hubs-backend/internal/adapters/jakarta"
+	"github.com/urbanflux/hubs-backend/internal/adapters/kualalumpur"
 	"github.com/urbanflux/hubs-backend/internal/websocket"
 )
 
@@ -25,6 +26,11 @@ func main() {
 	jakartaCfg := adapters.DefaultConfig()
 	jakartaCfg.PollInterval = 2 * 1e9 // 2 seconds for mock (time.Duration nanoseconds)
 	registry.Register(jakarta.NewTransjakartaAdapter(jakartaCfg))
+
+	// Kuala Lumpur — real-time GTFS-RT from api.data.gov.my (no API key needed)
+	klCfg := adapters.DefaultConfig()
+	registry.Register(kualalumpur.NewKualaLumpurBusAdapter(klCfg))
+	registry.Register(kualalumpur.NewKualaLumpurRailAdapter(klCfg))
 
 	// Start all registered adapters
 	if err := registry.StartAll(); err != nil {
