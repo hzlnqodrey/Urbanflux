@@ -5,6 +5,7 @@ import { Canvas, useFrame, useThree } from '@react-three/fiber'
 import { Sphere, Line, PointMaterial, Points, OrbitControls, Stars, Html } from '@react-three/drei'
 import * as THREE from 'three'
 import { MapPin, Users, Train, X } from 'lucide-react'
+import { withBasePath } from '@/lib/utils'
 
 const R = 2; // Globe radius
 
@@ -80,7 +81,7 @@ function DotGlobe({ activeHub, setActiveHub, mode }: DotGlobeProps) {
 
     useEffect(() => {
         const img = new Image();
-        img.src = '/earth-map.jpg';
+        img.src = withBasePath('/earth-map.jpg');
         img.crossOrigin = 'Anonymous';
         img.onload = () => {
             const canvas = document.createElement('canvas');
@@ -276,7 +277,7 @@ export default function HeroGlobe({ mode = 'offset' }: HeroGlobeProps) {
                 playsInline
                 className="absolute inset-0 w-full h-full object-cover mix-blend-screen opacity-90"
             >
-                <source src="/bg-animation.mp4" type="video/mp4" />
+                <source src={withBasePath('/bg-animation.mp4')} type="video/mp4" />
             </video> */}
 
             <div className="absolute inset-0 w-full h-full bg-transparent flex items-center justify-center pointer-events-none">
