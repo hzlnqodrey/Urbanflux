@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react'
 import HeroGlobe from '@/components/HeroGlobe'
+import { withBasePath } from "@/lib/utils";
 import { ArrowRight, Globe2, Activity } from 'lucide-react'
 
 export default function Home() {
@@ -12,8 +13,11 @@ export default function Home() {
       {/* Dynamic 3D Hero Background */}
       <HeroGlobe mode={globeMode} />
 
-      {/* Grid Overlay for aesthetic structure */}
-      <div className="absolute inset-0 bg-[url('/grid.svg')] bg-center [mask-image:linear-gradient(180deg,white,rgba(255,255,255,0))] opacity-20 pointer-events-none" />
+      {/* Dynamic Grid Background with fade out at bottom */}
+      <div
+        className="absolute inset-0 bg-center [mask-image:linear-gradient(180deg,white,rgba(255,255,255,0))] opacity-20 pointer-events-none"
+        style={{ backgroundImage: `url('${withBasePath('/grid.svg')}')` }}
+      />
 
       {/* Main UI Container */}
       <div className="relative z-10 max-w-7xl mx-auto px-6 md:px-12 lg:px-20 h-screen flex flex-col justify-center pointer-events-none">
