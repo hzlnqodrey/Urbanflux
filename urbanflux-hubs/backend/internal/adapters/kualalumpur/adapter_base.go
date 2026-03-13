@@ -161,8 +161,8 @@ func (b *baseAdapter) fetchFeed(ctx context.Context) ([]byte, error) {
 		return nil, fmt.Errorf("create request: %w", err)
 	}
 
-	// data.gov.my doesn't require keys, but set accept header for protobuf
-	req.Header.Set("Accept", "application/x-protobuf")
+	// data.gov.my returns HTTP 406 if we explicitly request application/x-protobuf
+	// So we omit the Accept header entirely to let the default (*/*) pass through
 
 	resp, err := b.httpClient.Do(req)
 	if err != nil {

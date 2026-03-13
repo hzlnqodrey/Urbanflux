@@ -31,8 +31,8 @@ type AdapterRegistry struct {
 func NewRegistry() *AdapterRegistry {
 	return &AdapterRegistry{
 		adapters:  make([]HubAdapter, 0),
-		stream:    make(chan models.UrbanfluxTelemetry, 256),
-		errStream: make(chan AdapterError, 128),
+		stream:    make(chan models.UrbanfluxTelemetry, 10000),
+		errStream: make(chan AdapterError, 1024),
 		done:      make(chan struct{}),
 	}
 }
@@ -60,7 +60,7 @@ func (r *AdapterRegistry) StartAll() error {
 
 	for _, adapter := range r.adapters {
 		// Create a per-adapter telemetry channel
-		adapterStream := make(chan models.UrbanfluxTelemetry, 64)
+		adapterStream := make(chan models.UrbanfluxTelemetry, 5000)
 		r.adapterStreams = append(r.adapterStreams, adapterStream)
 
 		// Start the adapter
