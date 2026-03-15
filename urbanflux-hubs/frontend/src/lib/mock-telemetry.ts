@@ -9,6 +9,7 @@ export type BusTelemetry = {
     status: 'ACTIVE' | 'DELAYED' | 'OFFLINE';
     bearing: number;
     nextStop: string;
+    mode?: string;
 };
 
 // Route: Corridor 1 (Blok M - Kota) - Simplified segment around Sudirman/Thamrin
@@ -235,13 +236,13 @@ export function generateInitialBuses(): { bus: BusTelemetry, segmentIndex: numbe
                 speed: 45,
                 status: 'ACTIVE',
                 bearing: 0,
-                nextStop: "Monas"
+                nextStop: "Monas",
+                mode: "BUS"
             },
             segmentIndex: startIndex,
             progress: 0,
             direction: -1 // Moving towards Monas
-        }
-,
+        },
         {
             bus: { 
                 id: "TB-0622", 
@@ -251,11 +252,61 @@ export function generateInitialBuses(): { bus: BusTelemetry, segmentIndex: numbe
                 speed: 35, 
                 status: 'ACTIVE', 
                 bearing: 0, 
-                nextStop: "Bundaran Senayan" 
+                nextStop: "Bundaran Senayan",
+                mode: "BUS"
             },
             segmentIndex: 0, 
             progress: 0, 
             direction: 1 // Moving towards Ragunan
+        },
+        // --- ADDED TRAIN, MRT, TRAM MOCKS FOR COLOR TESTING ---
+        {
+            bus: {
+                id: "KRL-001",
+                routeId: "BOGOR-LINE",
+                latitude: -6.1850,
+                longitude: 106.8250,
+                speed: 65,
+                status: 'ACTIVE',
+                bearing: 15,
+                nextStop: "Sudirman",
+                mode: "RAIL"
+            },
+            segmentIndex: 0,
+            progress: 0,
+            direction: 1
+        },
+        {
+            bus: {
+                id: "MRT-001",
+                routeId: "NS-LINE",
+                latitude: -6.1950,
+                longitude: 106.8229,
+                speed: 70,
+                status: 'ACTIVE',
+                bearing: -10,
+                nextStop: "Bundaran HI",
+                mode: "METRO"
+            },
+            segmentIndex: 0,
+            progress: 0,
+            direction: 1
+        },
+        {
+            bus: {
+                id: "LRT-001",
+                routeId: "CB-LINE",
+                latitude: -6.2050,
+                longitude: 106.8300,
+                speed: 55,
+                status: 'ACTIVE',
+                bearing: 45,
+                nextStop: "Dukuh Atas",
+                mode: "TRAM"
+            },
+            segmentIndex: 0,
+            progress: 0,
+            direction: 1
         }
     ]
 }
