@@ -27,12 +27,12 @@ export const HUB_CONFIGS: Record<string, HubConfig> = {
             bearing: -17.6,
         },
         modeColors: {
-            BUS: '#00E0FF',
-            RAIL: '#00C27A',
-            METRO: '#7C3AED',
-            FERRY: '#3B82F6',
-            MONORAIL: '#F59E0B',
-            TRAM: '#EC4899',
+            BUS: '#10B981', // Green
+            RAIL: '#F59E0B', // Yellow (Train)
+            METRO: '#3B82F6', // Blue (MRT)
+            TRAM: '#EC4899', // Pink
+            FERRY: '#0EA5E9',
+            MONORAIL: '#8B5CF6',
         },
     },
     'kuala-lumpur': {
@@ -46,12 +46,12 @@ export const HUB_CONFIGS: Record<string, HubConfig> = {
             bearing: 0,
         },
         modeColors: {
-            BUS: '#00E0FF',
-            RAIL: '#00C27A',
-            METRO: '#7C3AED',
-            FERRY: '#3B82F6',
-            MONORAIL: '#F59E0B',
-            TRAM: '#EC4899',
+            BUS: '#10B981', // Green
+            RAIL: '#F59E0B', // Yellow (Train)
+            METRO: '#3B82F6', // Blue (MRT)
+            TRAM: '#EC4899', // Pink
+            FERRY: '#0EA5E9',
+            MONORAIL: '#8B5CF6',
         },
     },
 }

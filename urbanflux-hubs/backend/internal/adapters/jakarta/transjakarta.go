@@ -107,58 +107,99 @@ func (t *TransjakartaAdapter) Start(stream chan<- models.UrbanfluxTelemetry) err
 				brng := math.Atan2(y, x) * (180 / math.Pi)
 				brng = math.Mod(brng+360, 360)
 
-				update := models.UrbanfluxTelemetry{
-					// Core identification
-					ID:      "JKT-TB-0104",
-					RouteID: "CORRIDOR-1",
-
-					// Hub & operator metadata
-					Hub:      "jakarta",
-					Mode:     models.ModeBus,
-					Operator: "Transjakarta",
-
-					// Geospatial data
-					Latitude:  p1[0] + (p2[0]-p1[0])*0.5,
-					Longitude: p1[1] + (p2[1]-p1[1])*0.5,
-					Speed:     45.0 + float64(idx),
-					Bearing:   brng,
-
-					// Status & schedule
-					Status:       "ACTIVE",
-					NextStop:     stops[nextIdx],
-					Occupancy:    models.OccupancyUnknown,
-					DelaySeconds: 0,
-
-					// Timestamp
-					LastUpdated: time.Now().UTC(),
+				updates := []models.UrbanfluxTelemetry{
+					{
+						ID:      "JKT-TB-0104",
+						RouteID: "CORRIDOR-1",
+						Hub:      "jakarta",
+						Mode:     models.ModeBus,
+						Operator: "Transjakarta",
+						Latitude:  p1[0] + (p2[0]-p1[0])*0.5,
+						Longitude: p1[1] + (p2[1]-p1[1])*0.5,
+						Speed:     45.0 + float64(idx),
+						Bearing:   brng,
+						Status:       "ACTIVE",
+						NextStop:     stops[nextIdx],
+						Occupancy:    models.OccupancyUnknown,
+						DelaySeconds: 0,
+						LastUpdated: time.Now().UTC(),
+					},
+					{
+						ID:      "JKT-KRL-001",
+						RouteID: "BOGOR-LINE",
+						Hub:      "jakarta",
+						Mode:     "RAIL",
+						Operator: "KCI",
+						Latitude:  p1[0] + (p2[0]-p1[0])*0.8 + 0.005,
+						Longitude: p1[1] + (p2[1]-p1[1])*0.8 + 0.005,
+						Speed:     65.0,
+						Bearing:   brng + 15,
+						Status:       "ACTIVE",
+						NextStop:     "Sudirman",
+						Occupancy:    models.OccupancyUnknown,
+						DelaySeconds: 0,
+						LastUpdated: time.Now().UTC(),
+					},
+					{
+						ID:      "JKT-MRT-001",
+						RouteID: "NS-LINE",
+						Hub:      "jakarta",
+						Mode:     "METRO",
+						Operator: "MRT Jakarta",
+						Latitude:  p1[0] + (p2[0]-p1[0])*0.2 - 0.003,
+						Longitude: p1[1] + (p2[1]-p1[1])*0.2 - 0.003,
+						Speed:     70.0,
+						Bearing:   brng - 10,
+						Status:       "ACTIVE",
+						NextStop:     "Bundaran HI",
+						Occupancy:    models.OccupancyUnknown,
+						DelaySeconds: 0,
+						LastUpdated: time.Now().UTC(),
+					},
+					{
+						ID:      "JKT-LRT-001",
+						RouteID: "CB-LINE",
+						Hub:      "jakarta",
+						Mode:     "TRAM",
+						Operator: "LRT Jabodebek",
+						Latitude:  p1[0] + (p2[0]-p1[0])*0.6 + 0.008,
+						Longitude: p1[1] + (p2[1]-p1[1])*0.6 - 0.002,
+						Speed:     55.0,
+						Bearing:   brng + 45,
+						Status:       "ACTIVE",
+						NextStop:     "Dukuh Atas",
+						Occupancy:    models.OccupancyUnknown,
+						DelaySeconds: 0,
+						LastUpdated: time.Now().UTC(),
+					},
 				}
 
-				// Validate before sending
-				if err := update.Validate(); err != nil {
-					t.errChan <- adapters.AdapterError{
-						Severity:    adapters.SeverityWarning,
-						Kind:        adapters.ErrValidation,
-						Message:     err.Error(),
-						AdapterName: t.Name(),
-						Timestamp:   time.Now().UTC(),
-						Retryable:   true,
+				for _, update := range updates {
+					if err := update.Validate(); err != nil {
+						t.errChan <- adapters.AdapterError{
+							Severity:    adapters.SeverityWarning,
+							Kind:        adapters.ErrValidation,
+							Message:     err.Error(),
+							AdapterName: t.Name(),
+							Timestamp:   time.Now().UTC(),
+							Retryable:   true,
+						}
+						t.setHealth(adapters.HealthDegraded)
+						continue
 					}
-					t.setHealth(adapters.HealthDegraded)
-					continue
-				}
 
-				// Send telemetry with non-blocking write
-				select {
-				case stream <- update:
-					// success
-				default:
-					t.errChan <- adapters.AdapterError{
-						Severity:    adapters.SeverityWarning,
-						Kind:        adapters.ErrUnknown,
-						Message:     "telemetry channel full, dropping update",
-						AdapterName: t.Name(),
-						Timestamp:   time.Now().UTC(),
-						Retryable:   true,
+					select {
+					case stream <- update:
+						// success
+					default:
+						t.errChan <- adapters.AdapterError{
+							Severity:    adapters.SeverityWarning,
+							Kind:        adapters.ErrUnknown,
+							Message:     "telemetry channel full, dropping update",
+							AdapterName: t.Name(),
+							Timestamp:   time.Now().UTC(),
+							Retryable:   true,
+						}
 					}
 				}
 
