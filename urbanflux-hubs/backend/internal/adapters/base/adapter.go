@@ -1,4 +1,4 @@
-package kualalumpur
+package base
 
 import (
 	"context"
@@ -14,9 +14,9 @@ import (
 	"github.com/urbanflux/hubs-backend/internal/models"
 )
 
-// baseAdapter contains shared HTTP polling, retry, and health logic
-// for all Kuala Lumpur GTFS-RT adapters.
-type baseAdapter struct {
+// BaseAdapter contains shared HTTP polling, retry, and health logic
+// for all GTFS-RT adapters across any city/operator.
+type BaseAdapter struct {
 	config     adapters.AdapterConfig
 	name       string
 	hub        string
@@ -30,8 +30,9 @@ type baseAdapter struct {
 	retries    int // consecutive failure count
 }
 
-func newBaseAdapter(name, hub, mode, operator string, cfg adapters.AdapterConfig) *baseAdapter {
-	return &baseAdapter{
+// NewBaseAdapter creates a new BaseAdapter with the given identity and config.
+func NewBaseAdapter(name, hub, mode, operator string, cfg adapters.AdapterConfig) *BaseAdapter {
+	return &BaseAdapter{
 		config:   cfg,
 		name:     name,
 		hub:      hub,
@@ -45,24 +46,24 @@ func newBaseAdapter(name, hub, mode, operator string, cfg adapters.AdapterConfig
 	}
 }
 
-func (b *baseAdapter) Name() string                         { return b.name }
-func (b *baseAdapter) Errors() <-chan adapters.AdapterError { return b.errChan }
-func (b *baseAdapter) Config() adapters.AdapterConfig       { return b.config }
+func (b *BaseAdapter) Name() string                         { return b.name }
+func (b *BaseAdapter) Errors() <-chan adapters.AdapterError { return b.errChan }
+func (b *BaseAdapter) Config() adapters.AdapterConfig       { return b.config }
 
-func (b *baseAdapter) Health() adapters.AdapterHealth {
+func (b *BaseAdapter) Health() adapters.AdapterHealth {
 	b.mu.RLock()
 	defer b.mu.RUnlock()
 	return b.health
 }
 
-func (b *baseAdapter) setHealth(h adapters.AdapterHealth) {
+func (b *BaseAdapter) SetHealth(h adapters.AdapterHealth) {
 	b.mu.Lock()
 	defer b.mu.Unlock()
 	b.health = h
 }
 
-// emitError sends an error to the error channel without blocking.
-func (b *baseAdapter) emitError(severity adapters.Severity, kind adapters.ErrorKind, msg string, retryable bool) {
+// EmitError sends an error to the error channel without blocking.
+func (b *BaseAdapter) EmitError(severity adapters.Severity, kind adapters.ErrorKind, msg string, retryable bool) {
 	select {
 	case b.errChan <- adapters.AdapterError{
 		Severity:    severity,
@@ -79,14 +80,14 @@ func (b *baseAdapter) emitError(severity adapters.Severity, kind adapters.ErrorK
 
 // Start begins the polling loop. Each tick fetches the GTFS-RT feed,
 // parses it, and sends telemetry to the stream channel.
-func (b *baseAdapter) Start(stream chan<- models.UrbanfluxTelemetry) error {
+func (b *BaseAdapter) Start(stream chan<- models.UrbanfluxTelemetry) error {
 	if b.config.BaseURL == "" {
 		return fmt.Errorf("[%s] BaseURL is required", b.name)
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())
 	b.cancel = cancel
-	b.setHealth(adapters.HealthConnected)
+	b.SetHealth(adapters.HealthConnected)
 	b.retries = 0
 
 	go func() {
@@ -99,7 +100,7 @@ func (b *baseAdapter) Start(stream chan<- models.UrbanfluxTelemetry) error {
 		for {
 			select {
 			case <-ctx.Done():
-				b.setHealth(adapters.HealthStopped)
+				b.SetHealth(adapters.HealthStopped)
 				return
 			case <-ticker.C:
 				b.pollAndStream(ctx, stream)
@@ -111,7 +112,7 @@ func (b *baseAdapter) Start(stream chan<- models.UrbanfluxTelemetry) error {
 }
 
 // pollAndStream fetches the GTFS-RT feed, parses it, and streams telemetry.
-func (b *baseAdapter) pollAndStream(ctx context.Context, stream chan<- models.UrbanfluxTelemetry) {
+func (b *BaseAdapter) pollAndStream(ctx context.Context, stream chan<- models.UrbanfluxTelemetry) {
 	data, err := b.fetchFeed(ctx)
 	if err != nil {
 		b.handleFetchError(err)
@@ -134,11 +135,11 @@ func (b *baseAdapter) pollAndStream(ctx context.Context, stream chan<- models.Ur
 
 	// Update health based on parse results
 	if len(result.Telemetry) == 0 && len(result.Errors) > 0 {
-		b.setHealth(adapters.HealthDegraded)
+		b.SetHealth(adapters.HealthDegraded)
 	} else if len(result.Errors) > 0 {
-		b.setHealth(adapters.HealthDegraded)
+		b.SetHealth(adapters.HealthDegraded)
 	} else {
-		b.setHealth(adapters.HealthConnected)
+		b.SetHealth(adapters.HealthConnected)
 	}
 
 	// Stream valid telemetry
@@ -148,14 +149,14 @@ func (b *baseAdapter) pollAndStream(ctx context.Context, stream chan<- models.Ur
 		case <-ctx.Done():
 			return
 		default:
-			b.emitError(adapters.SeverityWarning, adapters.ErrUnknown,
+			b.EmitError(adapters.SeverityWarning, adapters.ErrUnknown,
 				"telemetry channel full, dropping update", true)
 		}
 	}
 }
 
 // fetchFeed performs the HTTP GET request to the GTFS-RT endpoint.
-func (b *baseAdapter) fetchFeed(ctx context.Context) ([]byte, error) {
+func (b *BaseAdapter) fetchFeed(ctx context.Context) ([]byte, error) {
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, b.config.BaseURL, nil)
 	if err != nil {
 		return nil, fmt.Errorf("create request: %w", err)
@@ -172,13 +173,13 @@ func (b *baseAdapter) fetchFeed(ctx context.Context) ([]byte, error) {
 
 	// Handle HTTP error status codes
 	if resp.StatusCode == http.StatusTooManyRequests {
-		return nil, &httpError{statusCode: resp.StatusCode, kind: adapters.ErrRateLimit}
+		return nil, &HttpError{StatusCode: resp.StatusCode, Kind: adapters.ErrRateLimit}
 	}
 	if resp.StatusCode == http.StatusUnauthorized || resp.StatusCode == http.StatusForbidden {
-		return nil, &httpError{statusCode: resp.StatusCode, kind: adapters.ErrAuth}
+		return nil, &HttpError{StatusCode: resp.StatusCode, Kind: adapters.ErrAuth}
 	}
 	if resp.StatusCode >= 400 {
-		return nil, &httpError{statusCode: resp.StatusCode, kind: adapters.ErrNetwork}
+		return nil, &HttpError{StatusCode: resp.StatusCode, Kind: adapters.ErrNetwork}
 	}
 
 	body, err := io.ReadAll(resp.Body)
@@ -194,22 +195,22 @@ func (b *baseAdapter) fetchFeed(ctx context.Context) ([]byte, error) {
 }
 
 // handleFetchError processes HTTP fetch errors, managing retry count and health transitions.
-func (b *baseAdapter) handleFetchError(err error) {
+func (b *BaseAdapter) handleFetchError(err error) {
 	b.retries++
 
-	if httpErr, ok := err.(*httpError); ok {
-		switch httpErr.kind {
+	if httpErr, ok := err.(*HttpError); ok {
+		switch httpErr.Kind {
 		case adapters.ErrAuth:
 			// Fatal — stop retrying
-			b.emitError(adapters.SeverityFatal, adapters.ErrAuth,
-				fmt.Sprintf("authentication failed (HTTP %d)", httpErr.statusCode), false)
-			b.setHealth(adapters.HealthDisconnected)
+			b.EmitError(adapters.SeverityFatal, adapters.ErrAuth,
+				fmt.Sprintf("authentication failed (HTTP %d)", httpErr.StatusCode), false)
+			b.SetHealth(adapters.HealthDisconnected)
 			return
 
 		case adapters.ErrRateLimit:
-			b.emitError(adapters.SeverityWarning, adapters.ErrRateLimit,
-				fmt.Sprintf("rate limited (HTTP %d)", httpErr.statusCode), true)
-			b.setHealth(adapters.HealthDegraded)
+			b.EmitError(adapters.SeverityWarning, adapters.ErrRateLimit,
+				fmt.Sprintf("rate limited (HTTP %d)", httpErr.StatusCode), true)
+			b.SetHealth(adapters.HealthDegraded)
 			return
 		}
 	}
@@ -218,29 +219,29 @@ func (b *baseAdapter) handleFetchError(err error) {
 	severity := adapters.SeverityWarning
 	if b.retries >= b.config.MaxRetries {
 		severity = adapters.SeverityError
-		b.setHealth(adapters.HealthDisconnected)
+		b.SetHealth(adapters.HealthDisconnected)
 	} else {
-		b.setHealth(adapters.HealthDegraded)
+		b.SetHealth(adapters.HealthDegraded)
 	}
 
-	b.emitError(severity, adapters.ErrNetwork,
+	b.EmitError(severity, adapters.ErrNetwork,
 		fmt.Sprintf("fetch failed (attempt %d/%d): %v", b.retries, b.config.MaxRetries, err), true)
 }
 
-func (b *baseAdapter) Stop() error {
+func (b *BaseAdapter) Stop() error {
 	if b.cancel != nil {
 		b.cancel()
 	}
-	b.setHealth(adapters.HealthStopped)
+	b.SetHealth(adapters.HealthStopped)
 	return nil
 }
 
-// httpError wraps HTTP status code errors with an error kind.
-type httpError struct {
-	statusCode int
-	kind       adapters.ErrorKind
+// HttpError wraps HTTP status code errors with an error kind.
+type HttpError struct {
+	StatusCode int
+	Kind       adapters.ErrorKind
 }
 
-func (e *httpError) Error() string {
-	return fmt.Sprintf("HTTP %d (%s)", e.statusCode, e.kind)
+func (e *HttpError) Error() string {
+	return fmt.Sprintf("HTTP %d (%s)", e.StatusCode, e.Kind)
 }

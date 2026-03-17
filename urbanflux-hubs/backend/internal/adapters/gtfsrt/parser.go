@@ -107,6 +107,11 @@ func Parse(data []byte, hub, mode, operator, adapterName string) ParseResult {
 				routeID = trip.GetTripId()
 			}
 		}
+		// Fallback: some GTFS-RT feeds (e.g., BAS.MY) lack TripDescriptor entirely.
+		// Use "UNKNOWN" so the entity passes validation and shows on the map.
+		if routeID == "" {
+			routeID = "UNKNOWN"
+		}
 
 		// Convert speed from m/s (GTFS-RT spec) to km/h
 		speed := float64(pos.GetSpeed()) * 3.6

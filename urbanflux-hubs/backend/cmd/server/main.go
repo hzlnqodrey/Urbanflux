@@ -10,7 +10,10 @@ import (
 
 	"github.com/urbanflux/hubs-backend/internal/adapters"
 	"github.com/urbanflux/hubs-backend/internal/adapters/jakarta"
-	"github.com/urbanflux/hubs-backend/internal/adapters/kualalumpur"
+	"github.com/urbanflux/hubs-backend/internal/adapters/malaysia/kualalumpur"
+	"github.com/urbanflux/hubs-backend/internal/adapters/mybas"
+	penangprasarana "github.com/urbanflux/hubs-backend/internal/adapters/malaysia/penang/prasarana"
+	kuantanprasarana "github.com/urbanflux/hubs-backend/internal/adapters/malaysia/kuantan/prasarana"
 	"github.com/urbanflux/hubs-backend/internal/websocket"
 )
 
@@ -27,10 +30,28 @@ func main() {
 	jakartaCfg.PollInterval = 2 * 1e9 // 2 seconds for mock (time.Duration nanoseconds)
 	registry.Register(jakarta.NewTransjakartaAdapter(jakartaCfg))
 
-	// Kuala Lumpur — real-time GTFS-RT from api.data.gov.my (no API key needed)
-	klCfg := adapters.DefaultConfig()
-	registry.Register(kualalumpur.NewKualaLumpurBusAdapter(klCfg))
-	registry.Register(kualalumpur.NewKualaLumpurRailAdapter(klCfg))
+	// Malaysia — real-time GTFS-RT from api.data.gov.my (no API key needed)
+	myCfg := adapters.DefaultConfig()
+
+	// Kuala Lumpur — Mock (LRT, MRT, Monorail, Buses)
+	// Note: Using mock for development - real GTFS-RT feeds sparse at night
+	registry.Register(kualalumpur.NewMockKualaLumpurAdapter(myCfg))
+
+	// Penang & Kuantan — Prasarana
+	registry.Register(penangprasarana.NewPenangBusAdapter(myCfg))
+	registry.Register(kuantanprasarana.NewKuantanBusAdapter(myCfg))
+
+	// BAS.MY — city bus networks across Malaysia
+	registry.Register(mybas.NewMyBASKangarAdapter(myCfg))
+	registry.Register(mybas.NewMyBASAlorSetarAdapter(myCfg))
+	registry.Register(mybas.NewMyBASKotaBharuAdapter(myCfg))
+	registry.Register(mybas.NewMyBASKualaTerengganuAdapter(myCfg))
+	registry.Register(mybas.NewMyBASIpohAdapter(myCfg))
+	registry.Register(mybas.NewMyBASSerembanAAdapter(myCfg))
+	registry.Register(mybas.NewMyBASSerembanBAdapter(myCfg))
+	registry.Register(mybas.NewMyBASMelakaAdapter(myCfg))
+	registry.Register(mybas.NewMyBASJohorAdapter(myCfg))
+	registry.Register(mybas.NewMyBASKuchingAdapter(myCfg))
 
 	// Start all registered adapters
 	if err := registry.StartAll(); err != nil {
@@ -71,6 +92,12 @@ func main() {
 			return
 		}
 		w.Write(bytes)
+	})
+
+	// Debug endpoint — show message count
+	http.HandleFunc("/debug", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.Write([]byte(`{"status":"Backend running on :8080","adapters":14}`))
 	})
 
 	// Graceful shutdown on OS signals

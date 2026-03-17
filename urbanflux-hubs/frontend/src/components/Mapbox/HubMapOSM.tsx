@@ -4,7 +4,7 @@ import React, { useEffect, useState } from 'react'
 import { MapContainer, TileLayer, Marker, Polyline, useMap, Popup } from 'react-leaflet'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
-import { CORRIDOR_1_COORDS, CORRIDOR_6_COORDS } from '@/lib/mock-telemetry'
+import { CORRIDOR_1_COORDS, CORRIDOR_6_COORDS, KL_LRT_KJ_COORDS, KL_MRT_KG_COORDS } from '@/lib/mock-telemetry'
 import { HUB_CONFIGS } from '@/lib/hub-config'
 import type { UseHubTelemetryReturn } from '@/hooks/useHubTelemetry'
 
@@ -57,29 +57,28 @@ export default function HubMapOSM({ activeHub, telemetry, theme = 'dark', showTr
     const isDark = theme === 'dark'
 
     // Polling loop to extract features from the hook's GeoJSON builder
-    // Leaflet React markers are DOM-based, so this won't scale to 500+ as well as Mapbox 3D,
-    // but we throttle it to ~15fps (64ms) to save CPU.
+    // Throttled to 2fps (500ms) for smooth animation without flickering
     useEffect(() => {
         const interval = setInterval(() => {
             const geojson = telemetry.getVehiclesGeoJSON(hubConfig)
             setVehicles(geojson.features)
-        }, 64)
+        }, 500)
 
         return () => clearInterval(interval)
     }, [telemetry, hubConfig])
 
-    // Custom glowing dot icon
+    // Custom vehicle icon - stable without flickering
     const createGlowingIcon = (color: string) => {
         return L.divIcon({
-            className: 'custom-bus-marker',
+            className: 'custom-vehicle-marker',
             html: `
-          <div class="relative flex items-center justify-center w-6 h-6 -ml-3 -mt-3">
-              <span class="animate-ping absolute inline-flex h-4 w-4 rounded-full opacity-75" style="background-color: ${color}"></span>
-              <span class="relative inline-flex rounded-full h-2.5 w-2.5 shadow-sm" style="background-color: ${color}; box-shadow: 0 0 10px ${color}"></span>
+          <div class="relative flex items-center justify-center w-8 h-8 -ml-4 -mt-4" style="pointer-events: none;">
+              <div class="absolute inset-0 rounded-full opacity-30" style="background-color: ${color}; filter: blur(4px);"></div>
+              <span class="relative inline-flex rounded-full h-3 w-3 shadow-sm" style="background-color: ${color}; box-shadow: 0 0 8px ${color}; border: 2px solid white;"></span>
           </div>
       `,
-            iconSize: [24, 24],
-            iconAnchor: [12, 12]
+            iconSize: [32, 32],
+            iconAnchor: [16, 16]
         })
     }
 
@@ -124,7 +123,31 @@ export default function HubMapOSM({ activeHub, telemetry, theme = 'dark', showTr
                         />
                         <Polyline
                             positions={CORRIDOR_6_COORDS}
-                            pathOptions={{ color: '#00C27A', weight: 2, opacity: 0.5 }}
+                            pathOptions={{ color: '#10B981', weight: 2, opacity: 0.5 }}
+                        />
+                    </>
+                )}
+
+                {activeHub === 'kuala-lumpur' && (
+                    <>
+                        {/* LRT Kelana Jaya Line (Pink) */}
+                        <Polyline
+                            positions={KL_LRT_KJ_COORDS}
+                            pathOptions={{ color: '#ffffff', weight: 4, opacity: 0.2, dashArray: '10, 10' }}
+                        />
+                        <Polyline
+                            positions={KL_LRT_KJ_COORDS}
+                            pathOptions={{ color: '#EC4899', weight: 3, opacity: 0.6 }}
+                        />
+
+                        {/* MRT Kajang Line (Blue) */}
+                        <Polyline
+                            positions={KL_MRT_KG_COORDS}
+                            pathOptions={{ color: '#ffffff', weight: 4, opacity: 0.2, dashArray: '10, 10' }}
+                        />
+                        <Polyline
+                            positions={KL_MRT_KG_COORDS}
+                            pathOptions={{ color: '#3B82F6', weight: 3, opacity: 0.6 }}
                         />
                     </>
                 )}

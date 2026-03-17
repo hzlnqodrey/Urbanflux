@@ -42,24 +42,43 @@ export function useHubTelemetry(activeHub: string): UseHubTelemetryReturn {
     // --- WebSocket message handler ---
     const handleMessage = useCallback((event: MessageEvent) => {
         try {
-            const telemetry: VehicleTelemetry = JSON.parse(event.data)
+            // The backend may send multiple JSON objects concatenated together
+            // Split and parse each one separately
+            const data = event.data.trim()
+            const jsonObjects: string[] = []
 
-            // Client-side hub filter — cheap, no server overhead
-            if (telemetry.hub !== activeHubRef.current) return
+            // Split by }{ and add back the braces for each object
+            let depth = 0
+            let start = 0
+            for (let i = 0; i < data.length; i++) {
+                if (data[i] === '{') depth++
+                if (data[i] === '}') depth--
+                if (depth === 0 && i > start) {
+                    jsonObjects.push(data.substring(start, i + 1))
+                    start = i + 1
+                }
+            }
 
-            const existing = vehiclesRef.current.get(telemetry.id)
-            const now = performance.now()
+            for (const jsonStr of jsonObjects) {
+                const telemetry: VehicleTelemetry = JSON.parse(jsonStr)
 
-            vehiclesRef.current.set(telemetry.id, {
-                prev: existing
-                    ? { lat: existing.curr.lat, lon: existing.curr.lon }
-                    : { lat: telemetry.latitude, lon: telemetry.longitude },
-                curr: { lat: telemetry.latitude, lon: telemetry.longitude },
-                data: telemetry,
-                updatedAt: now,
-            })
-        } catch {
-            // Silently ignore malformed messages
+                // Client-side hub filter — cheap, no server overhead
+                if (telemetry.hub !== activeHubRef.current) continue
+
+                const existing = vehiclesRef.current.get(telemetry.id)
+                const now = performance.now()
+
+                vehiclesRef.current.set(telemetry.id, {
+                    prev: existing
+                        ? { lat: existing.curr.lat, lon: existing.curr.lon }
+                        : { lat: telemetry.latitude, lon: telemetry.longitude },
+                    curr: { lat: telemetry.latitude, lon: telemetry.longitude },
+                    data: telemetry,
+                    updatedAt: now,
+                })
+            }
+        } catch (err) {
+            // Silently ignore parse errors (malformed messages)
         }
     }, [])
 
@@ -77,7 +96,7 @@ export function useHubTelemetry(activeHub: string): UseHubTelemetryReturn {
 
         ws.onmessage = handleMessage
 
-        ws.onclose = () => {
+        ws.onclose = (event) => {
             setConnectionStatus('DISCONNECTED')
             // Exponential backoff reconnection
             const delay = reconnectDelayRef.current
@@ -87,7 +106,8 @@ export function useHubTelemetry(activeHub: string): UseHubTelemetryReturn {
             }, delay)
         }
 
-        ws.onerror = () => {
+        ws.onerror = (event) => {
+            console.error('[WS] Error:', event)
             ws.close() // triggers onclose → reconnect
         }
 

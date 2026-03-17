@@ -32,6 +32,7 @@ function LiveTimeClock() {
 }
 
 export default function Dashboard() {
+  const [activeCountry, setActiveCountry] = useState<string>('Indonesia')
   const [activeHub, setActiveHub] = useState<string>('jakarta')
   const [theme, setTheme] = useState<'dark' | 'light'>('dark')
   const [isSidebarExpanded, setIsSidebarExpanded] = useState(true)
@@ -40,6 +41,20 @@ export default function Dashboard() {
   const [showStations, setShowStations] = useState(true)
   const [showTrains, setShowTrains] = useState(true)
   const [isRealtimeEnabled, setIsRealtimeEnabled] = useState(true)
+
+  // Compute available countries and currently available hubs based on selected country
+  const availableCountries = Array.from(new Set(HUB_IDS.map(id => HUB_CONFIGS[id].country)))
+  const availableHubs = HUB_IDS.filter(id => HUB_CONFIGS[id].country === activeCountry)
+
+  // When country changes, auto-select the first available hub for that country
+  const handleCountryChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const newCountry = e.target.value
+    setActiveCountry(newCountry)
+    const newHubs = HUB_IDS.filter(id => HUB_CONFIGS[id].country === newCountry)
+    if (newHubs.length > 0) {
+      setActiveHub(newHubs[0])
+    }
+  }
 
   const telemetry = useHubTelemetry(activeHub)
   const hubConfig = HUB_CONFIGS[activeHub] || HUB_CONFIGS['jakarta']
@@ -75,22 +90,42 @@ export default function Dashboard() {
               <Menu className="w-5 h-5" />
             </button>
 
-            {/* Hub Selector Dropdown */}
-            <div className={cn("flex items-center rounded-lg border px-2 py-1", isDark ? "bg-white/5 border-white/10" : "bg-slate-50 border-slate-200")}>
-              <select
-                value={activeHub}
-                onChange={(e) => setActiveHub(e.target.value)}
-                className={cn("bg-transparent font-mono text-xs font-medium focus:outline-none cursor-pointer appearance-none w-[120px]", isDark ? "text-[#00E0FF]" : "text-blue-600")}
-              >
-                {HUB_IDS.map(hubId => (
-                  <option key={hubId} value={hubId} className={isDark ? "bg-[#0A0B0E] text-slate-300" : "bg-white text-slate-800"}>
-                    {HUB_CONFIGS[hubId].displayName}
-                  </option>
-                ))}
-              </select>
-              {/* Custom dropdown arrow */}
-              <div className={cn("pointer-events-none ml-1", isDark ? "text-slate-400" : "text-slate-500")}>
-                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
+            {/* Cascaded Selectors */}
+            <div className="flex gap-2">
+              {/* Country Selector */}
+              <div className={cn("flex items-center rounded-lg border px-2 py-1", isDark ? "bg-white/5 border-white/10" : "bg-slate-50 border-slate-200")}>
+                <select
+                  value={activeCountry}
+                  onChange={handleCountryChange}
+                  className={cn("bg-transparent font-mono text-xs font-bold uppercase tracking-wider focus:outline-none cursor-pointer appearance-none w-[100px]", isDark ? "text-slate-300" : "text-slate-700")}
+                >
+                  {availableCountries.map(country => (
+                    <option key={country} value={country} className={isDark ? "bg-[#0A0B0E] text-slate-300" : "bg-white text-slate-800"}>
+                      {country}
+                    </option>
+                  ))}
+                </select>
+                <div className={cn("pointer-events-none ml-1", isDark ? "text-slate-400" : "text-slate-500")}>
+                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
+                </div>
+              </div>
+
+              {/* Hub Selector */}
+              <div className={cn("flex items-center rounded-lg border px-2 py-1", isDark ? "bg-white/5 border-white/10" : "bg-slate-50 border-slate-200")}>
+                <select
+                  value={activeHub}
+                  onChange={(e) => setActiveHub(e.target.value)}
+                  className={cn("bg-transparent font-mono text-xs font-medium focus:outline-none cursor-pointer appearance-none w-[140px]", isDark ? "text-[#00E0FF]" : "text-blue-600")}
+                >
+                  {availableHubs.map(hubId => (
+                    <option key={hubId} value={hubId} className={isDark ? "bg-[#0A0B0E] text-slate-300" : "bg-white text-slate-800"}>
+                      {HUB_CONFIGS[hubId].displayName}
+                    </option>
+                  ))}
+                </select>
+                <div className={cn("pointer-events-none ml-1", isDark ? "text-slate-400" : "text-slate-500")}>
+                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
+                </div>
               </div>
             </div>
 
@@ -125,6 +160,12 @@ export default function Dashboard() {
               <span className="font-mono text-sm bg-white/5 px-2 py-1 rounded border border-white/10 text-white shadow-inner">
                 {hubConfig.displayName}
               </span>
+              {/* Debug: Show KL vehicle count */}
+              {activeHub === 'kuala-lumpur' && (
+                <span className="font-mono text-xs bg-green-500/20 px-2 py-1 rounded border border-green-500/30 text-green-400">
+                  KL: {telemetry.vehicleCount}
+                </span>
+              )}
             </div>
           </div>
           

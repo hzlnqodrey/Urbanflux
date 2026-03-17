@@ -13,6 +13,33 @@ export type BusTelemetry = {
 };
 
 // Route: Corridor 1 (Blok M - Kota) - Simplified segment around Sudirman/Thamrin
+
+// Route: KL LRT Kelana Jaya Line (Simplified: KL Sentral -> KLCC -> Ampang Park)
+export const KL_LRT_KJ_COORDS: [number, number][] = [
+    [3.1340, 101.6860], // KL Sentral
+    [3.1425, 101.6955], // Pasar Seni 
+    [3.1495, 101.6965], // Masjid Jamek
+    [3.1565, 101.7015], // Dang Wangi
+    [3.1585, 101.7100], // Kampung Baru
+    [3.1590, 101.7145], // KLCC
+    [3.1615, 101.7185], // Ampang Park
+    [3.1650, 101.7245], // Damai
+    [3.1685, 101.7300], // Dato Keramat
+];
+
+// Route: KL MRT Kajang Line (Simplified: Semantan -> Maluri)
+export const KL_MRT_KG_COORDS: [number, number][] = [
+    [3.1465, 101.6655], // Pusat Bandar Damansara
+    [3.1455, 101.6740], // Semantan
+    [3.1360, 101.6875], // Muzium Negara (KL Sentral)
+    [3.1425, 101.6955], // Pasar Seni
+    [3.1425, 101.7015], // Merdeka
+    [3.1460, 101.7115], // Bukit Bintang
+    [3.1415, 101.7195], // TRX
+    [3.1325, 101.7225], // Cochrane
+    [3.1225, 101.7285], // Maluri
+];
+
 export const CORRIDOR_6_COORDS: [number, number][] = [
     [-6.24324, 106.80000],
     [-6.24310, 106.79940],

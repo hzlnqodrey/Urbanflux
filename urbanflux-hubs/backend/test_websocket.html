@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Kuala Lumpur Vehicle Test</title>
+    <style>
+        body { font-family: monospace; padding: 20px; background: #1a1a1a; color: #00ff00; }
+        #log { max-height: 400px; overflow-y: auto; background: #000; padding: 10px; border: 1px solid #333; }
+        .vehicle { margin: 5px 0; padding: 5px; background: #222; }
+        .bus { border-left: 3px solid #10B981; }
+        .rail { border-left: 3px solid #F59E0B; }
+        h1 { color: #fff; }
+        .stats { color: #0ff; margin: 10px 0; }
+    </style>
+</head>
+<body>
+    <h1>🚌 Kuala Lumpur Live Vehicle Feed</h1>
+    <div class="stats">
+        <span id="count">Vehicles: 0</span> |
+        <span id="status">Status: Connecting...</span>
+    </div>
+    <div id="log"></div>
+
+    <script>
+        const log = document.getElementById('log');
+        const countEl = document.getElementById('count');
+        const statusEl = document.getElementById('status');
+        let vehicleCount = 0;
+
+        function addVehicle(v) {
+            const div = document.createElement('div');
+            div.className = `vehicle ${v.mode.toLowerCase()}`;
+            div.innerHTML = `
+                <strong>${v.id}</strong> (${v.mode}) - ${v.route_id}<br>
+                📍 ${v.latitude.toFixed(4)}, ${v.longitude.toFixed(4)} |
+                ⚡ ${v.speed.toFixed(1)} km/h |
+                🧭 ${v.bearing.toFixed(0)}°
+            `;
+            log.appendChild(div);
+            log.scrollTop = log.scrollHeight;
+            vehicleCount++;
+            countEl.textContent = `Vehicles: ${vehicleCount}`;
+        }
+
+        const ws = new WebSocket('ws://localhost:8080/ws');
+
+        ws.onopen = () => {
+            statusEl.textContent = 'Status: Connected ✅';
+            statusEl.style.color = '#0f0';
+            // Subscribe to Kuala Lumpur hub
+            ws.send(JSON.stringify({ hub: 'kuala-lumpur' }));
+        };
+
+        ws.onmessage = (event) => {
+            const data = JSON.parse(event.data);
+            if (data.vehicles && Array.isArray(data.vehicles)) {
+                data.vehicles.forEach(addVehicle);
+            }
+        };
+
+        ws.onerror = (error) => {
+            statusEl.textContent = 'Status: Error ❌';
+            statusEl.style.color = '#f00';
+            console.error(error);
+        };
+
+        ws.onclose = () => {
+            statusEl.textContent = 'Status: Disconnected';
+            statusEl.style.color = '#f90';
+        };
+    </script>
+</body>
+</html>
