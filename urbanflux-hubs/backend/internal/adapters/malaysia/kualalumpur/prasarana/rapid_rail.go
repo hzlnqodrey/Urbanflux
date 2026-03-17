@@ -1,12 +1,13 @@
-package kualalumpur
+package prasarana
 
 import (
 	"github.com/urbanflux/hubs-backend/internal/adapters"
+	"github.com/urbanflux/hubs-backend/internal/adapters/base"
 	"github.com/urbanflux/hubs-backend/internal/models"
 )
 
 const (
-	klRailEndpoint = "https://api.data.gov.my/gtfs-realtime/vehicle-position/prasarana?category=rapid-rail-kl"
+	klRailEndpoint = "https://api.data.gov.my/gtfs-realtime/vehicle-position/prasarana/?category=rapid-rail-kl"
 )
 
 // KualaLumpurRailAdapter streams real-time Rapid KL rail (LRT/MRT/Monorail)
@@ -15,7 +16,7 @@ const (
 // Note: the rail feed may be less stable than the bus feed per data.gov.my docs.
 // This adapter handles degraded states gracefully without crashing.
 type KualaLumpurRailAdapter struct {
-	*baseAdapter
+	*base.BaseAdapter
 }
 
 // NewKualaLumpurRailAdapter creates a new adapter for Rapid KL rail vehicle positions.
@@ -25,7 +26,7 @@ func NewKualaLumpurRailAdapter(cfg adapters.AdapterConfig) *KualaLumpurRailAdapt
 		cfg.BaseURL = klRailEndpoint
 	}
 	return &KualaLumpurRailAdapter{
-		baseAdapter: newBaseAdapter(
+		BaseAdapter: base.NewBaseAdapter(
 			"KualaLumpur-RapidRail",
 			"kuala-lumpur",
 			models.ModeRail,
