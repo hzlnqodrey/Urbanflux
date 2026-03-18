@@ -32,12 +32,16 @@ export function useHubTelemetry(activeHub: string): UseHubTelemetryReturn {
     const reconnectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
     const reconnectDelayRef = useRef(INITIAL_RECONNECT_DELAY)
     const activeHubRef = useRef(activeHub)
+    // Store connect function in ref to avoid stale closure in setTimeout
+    const connectRef = useRef<(() => void) | null>(null)
 
     const [connectionStatus, setConnectionStatus] = useState<ConnectionStatus>('DISCONNECTED')
     const [vehicleCount, setVehicleCount] = useState(0)
 
     // Keep ref in sync for use inside WS callbacks
-    activeHubRef.current = activeHub
+    useEffect(() => {
+        activeHubRef.current = activeHub
+    }, [activeHub])
 
     // --- WebSocket message handler ---
     const handleMessage = useCallback((event: MessageEvent) => {
@@ -77,7 +81,7 @@ export function useHubTelemetry(activeHub: string): UseHubTelemetryReturn {
                     updatedAt: now,
                 })
             }
-        } catch (err) {
+        } catch {
             // Silently ignore parse errors (malformed messages)
         }
     }, [])
@@ -96,26 +100,33 @@ export function useHubTelemetry(activeHub: string): UseHubTelemetryReturn {
 
         ws.onmessage = handleMessage
 
-        ws.onclose = (event) => {
+        ws.onclose = () => {
             setConnectionStatus('DISCONNECTED')
             // Exponential backoff reconnection
             const delay = reconnectDelayRef.current
             reconnectTimerRef.current = setTimeout(() => {
                 reconnectDelayRef.current = Math.min(delay * 2, MAX_RECONNECT_DELAY)
-                connect()
+                // Use ref to avoid stale closure
+                connectRef.current?.()
             }, delay)
         }
 
-        ws.onerror = (event) => {
-            console.error('[WS] Error:', event)
+        ws.onerror = () => {
+            console.error('[WS] Error: WebSocket connection failed')
             ws.close() // triggers onclose → reconnect
         }
 
         wsRef.current = ws
     }, [handleMessage])
 
+    // Keep connectRef updated
+    useEffect(() => {
+        connectRef.current = connect
+    }, [connect])
+
     // --- Lifecycle ---
     useEffect(() => {
+        // eslint-disable-next-line react-hooks/set-state-in-effect -- Connecting to WebSocket external system
         connect()
         return () => {
             if (reconnectTimerRef.current) clearTimeout(reconnectTimerRef.current)
@@ -126,6 +137,7 @@ export function useHubTelemetry(activeHub: string): UseHubTelemetryReturn {
     // --- Clear vehicles on hub switch ---
     useEffect(() => {
         vehiclesRef.current.clear()
+        // eslint-disable-next-line react-hooks/set-state-in-effect -- Reset state when hub changes
         setVehicleCount(0)
     }, [activeHub])
 

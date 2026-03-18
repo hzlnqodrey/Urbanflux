@@ -7,8 +7,8 @@ import (
 	"time"
 
 	"github.com/urbanflux/hubs-backend/internal/adapters"
-	"github.com/urbanflux/hubs-backend/internal/adapters/ktmb"
-	"github.com/urbanflux/hubs-backend/internal/adapters/kualalumpur"
+	"github.com/urbanflux/hubs-backend/internal/adapters/malaysia/kualalumpur/ktmb"
+	klprasarana "github.com/urbanflux/hubs-backend/internal/adapters/malaysia/kualalumpur/prasarana"
 	"github.com/urbanflux/hubs-backend/internal/models"
 )
 
@@ -17,8 +17,8 @@ func main() {
 	myCfg := adapters.DefaultConfig()
 	myCfg.Timeout = 5 * time.Second
 
-	registry.Register(kualalumpur.NewKualaLumpurBusAdapter(myCfg))
-	registry.Register(ktmb.NewKTMBAdapter(myCfg))
+	registry.Register(klprasarana.NewKualaLumpurBusAdapter(myCfg))
+	registry.Register(ktmb.NewKTMAdapter(myCfg))
 
 	if err := registry.StartAll(); err != nil {
 		log.Fatal(err)
