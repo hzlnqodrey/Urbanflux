@@ -1,7 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
     // Static export for GitHub Pages
-    output: "export",
+    output: "standalone",
 
     // Base path for GitHub Pages: hzlnqodrey.github.io/urbanflux-hubs
     basePath: "/urbanflux-hubs",
