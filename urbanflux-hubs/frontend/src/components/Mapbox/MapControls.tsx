@@ -1,13 +1,12 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { 
-  Train, 
-  MapPin, 
-  Play, 
-  Pause, 
-  Map, 
-  Satellite, 
+import {
+  Train,
+  MapPin,
+  Pause,
+  Map,
+  Satellite,
   Mountain,
   Settings,
   ChevronDown,
@@ -15,7 +14,6 @@ import {
   Eye,
   EyeOff,
   Moon,
-  Sun,
   GripVertical,
   RotateCcw,
   ZoomIn,
@@ -73,13 +71,13 @@ export function MapControls({
     isInitialized
   } = useDraggable({
     storageKey: 'map-controls-position',
-    defaultPosition: { x: 24, y: 100 },
-    bottomRelative: true
+    defaultPosition: { x: 24, y: 100 }
   })
   
   // Update expanded state when forceExpanded changes
   useEffect(() => {
     if (forceExpanded) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- Sync with prop change
       setIsExpanded(true)
     }
   }, [forceExpanded])
@@ -257,12 +255,11 @@ export function MapControls({
               <div className="grid grid-cols-2 gap-2">
                 {mapTypeOptions.filter(o => o.value === 'dark' || o.value === 'standard').map((option) => {
                   const IconComponent = option.icon;
-                  // Map 'standard' to 'light' for UI purposes
                   const effectiveOptionVal = option.value === 'standard' ? 'light' : 'dark';
                   return (
                     <button
                       key={option.value}
-                      onClick={() => setMapType(effectiveOptionVal as any)}
+                      onClick={() => setMapType(effectiveOptionVal as 'dark' | 'light')}
                       className={cn(
                         "flex flex-col items-center p-2 rounded-lg text-xs transition-colors border",
                         mapType === effectiveOptionVal

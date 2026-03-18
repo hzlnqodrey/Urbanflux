@@ -10,10 +10,8 @@ import (
 
 	"github.com/urbanflux/hubs-backend/internal/adapters"
 	"github.com/urbanflux/hubs-backend/internal/adapters/jakarta"
-	"github.com/urbanflux/hubs-backend/internal/adapters/malaysia/kualalumpur"
-	"github.com/urbanflux/hubs-backend/internal/adapters/mybas"
-	penangprasarana "github.com/urbanflux/hubs-backend/internal/adapters/malaysia/penang/prasarana"
-	kuantanprasarana "github.com/urbanflux/hubs-backend/internal/adapters/malaysia/kuantan/prasarana"
+	"github.com/urbanflux/hubs-backend/internal/adapters/malaysia/kualalumpur/ktmb"
+	klprasarana "github.com/urbanflux/hubs-backend/internal/adapters/malaysia/kualalumpur/prasarana"
 	"github.com/urbanflux/hubs-backend/internal/websocket"
 )
 
@@ -30,28 +28,16 @@ func main() {
 	jakartaCfg.PollInterval = 2 * 1e9 // 2 seconds for mock (time.Duration nanoseconds)
 	registry.Register(jakarta.NewTransjakartaAdapter(jakartaCfg))
 
-	// Malaysia — real-time GTFS-RT from api.data.gov.my (no API key needed)
+	// Malaysia — Kuala Lumpur hub only (Prasarana + KTMB)
 	myCfg := adapters.DefaultConfig()
 
-	// Kuala Lumpur — Mock (LRT, MRT, Monorail, Buses)
-	// Note: Using mock for development - real GTFS-RT feeds sparse at night
-	registry.Register(kualalumpur.NewMockKualaLumpurAdapter(myCfg))
+	// Kuala Lumpur — Prasarana RapidKL (Bus, Rail, MRT Feeder)
+	registry.Register(klprasarana.NewKualaLumpurBusAdapter(myCfg))
+	registry.Register(klprasarana.NewKualaLumpurRailAdapter(myCfg))
+	registry.Register(klprasarana.NewKualaLumpurMRTFeederBusAdapter(myCfg))
 
-	// Penang & Kuantan — Prasarana
-	registry.Register(penangprasarana.NewPenangBusAdapter(myCfg))
-	registry.Register(kuantanprasarana.NewKuantanBusAdapter(myCfg))
-
-	// BAS.MY — city bus networks across Malaysia
-	registry.Register(mybas.NewMyBASKangarAdapter(myCfg))
-	registry.Register(mybas.NewMyBASAlorSetarAdapter(myCfg))
-	registry.Register(mybas.NewMyBASKotaBharuAdapter(myCfg))
-	registry.Register(mybas.NewMyBASKualaTerengganuAdapter(myCfg))
-	registry.Register(mybas.NewMyBASIpohAdapter(myCfg))
-	registry.Register(mybas.NewMyBASSerembanAAdapter(myCfg))
-	registry.Register(mybas.NewMyBASSerembanBAdapter(myCfg))
-	registry.Register(mybas.NewMyBASMelakaAdapter(myCfg))
-	registry.Register(mybas.NewMyBASJohorAdapter(myCfg))
-	registry.Register(mybas.NewMyBASKuchingAdapter(myCfg))
+	// Kuala Lumpur — KTMB (KTM Komuter + ETS)
+	registry.Register(ktmb.NewKTMAdapter(myCfg))
 
 	// Start all registered adapters
 	if err := registry.StartAll(); err != nil {
@@ -97,7 +83,7 @@ func main() {
 	// Debug endpoint — show message count
 	http.HandleFunc("/debug", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
-		w.Write([]byte(`{"status":"Backend running on :8080","adapters":14}`))
+		w.Write([]byte(`{"status":"Backend running on :8080","adapters":5}`)) // Jakarta + 3 KL Prasarana + KTMB
 	})
 
 	// Graceful shutdown on OS signals
