@@ -15,6 +15,8 @@ import { MapLegend } from '@/components/Mapbox/MapLegend'
 function LiveTimeClock() {
   const [time, setTime] = useState<Date | null>(null)
   useEffect(() => {
+    // Initialize time immediately
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- Initialize clock
     setTime(new Date())
     const timer = setInterval(() => setTime(new Date()), 1000)
     return () => clearInterval(timer)

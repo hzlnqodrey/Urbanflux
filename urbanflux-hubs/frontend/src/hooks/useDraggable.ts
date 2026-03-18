@@ -8,15 +8,14 @@ interface Position {
 interface UseDraggableProps {
   storageKey: string
   defaultPosition: Position
-  bottomRelative?: boolean
 }
 
-export function useDraggable({ storageKey, defaultPosition, bottomRelative = false }: UseDraggableProps) {
+export function useDraggable({ storageKey, defaultPosition }: UseDraggableProps) {
   const [position, setPosition] = useState<Position>(defaultPosition)
   const [isDragging, setIsDragging] = useState(false)
   const [isInitialized, setIsInitialized] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
-  
+
   const dragStartPos = useRef<Position>({ x: 0, y: 0 })
   const elementStartPos = useRef<Position>({ x: 0, y: 0 })
 
@@ -24,9 +23,10 @@ export function useDraggable({ storageKey, defaultPosition, bottomRelative = fal
     const saved = localStorage.getItem(storageKey)
     if (saved) {
       try {
+        // eslint-disable-next-line react-hooks/set-state-in-effect -- Restore saved position
         setPosition(JSON.parse(saved))
-      } catch (e) {
-        // use default
+      } catch {
+        // use default position
       }
     }
     setIsInitialized(true)
